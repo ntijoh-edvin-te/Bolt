@@ -1,0 +1,33 @@
+hero, class, rating
+Unimax-3000, warrior, 4
+Tara, warrior, 4
+Ignis, warrior, 4
+Aida, warrior, 5
+Delacium, warrior, 3
+Xia, warrior, 2
+Sigmund, warrior, 3
+King Barton, warrior, 3
+Eos, mage, 5
+Aida, mage, 5
+Holmes Young, mage, 5
+Aspen (Lord of Fear), mage, 5
+Tix, mage, 4
+Ada, mage, 3
+Amen-Ra, mage, 4
+Elyvia, ranger, 4
+Valkyrie, ranger, 4
+Flora, ranger, 3
+Carrie, ranger, 5
+Garuda, ranger, 4
+Saja, ranger, 3
+Drake, assassin, 5
+Inosuke, assassin, 4
+Sherlock, assassin, 5
+Phorcys, assassin, 4
+Rogan, assassin, 5
+Faith Blade, priest, 4
+Andrea, priest, 4
+Ormus, priest, 3
+Belrain, priest, 5
+Gustin, priest, 4
+Elyria, priest, 3
