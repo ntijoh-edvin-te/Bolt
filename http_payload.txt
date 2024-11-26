@@ -1,7 +1,7 @@
-GET /fruits?type=bananas&minrating=4 HTTP/1.1
+GET /heroes?type=bananas&minrating=4 HTTP/1.1
 Host: fruits.com
 User-Agent: ExampleBrowser/1.0
 Accept-Encoding: gzip, deflate
 Accept: */*
 
-auth_key=ad7a2hda2jvsc8wsd&skibidi=rizz
+auth_key=ad7a2hda2jvsc8wsd

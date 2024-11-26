@@ -60,7 +60,6 @@
 class Request
     def initialize(request)
         @allowed_methods = ["GET", "POST"]
-
         parser(request)
     end
 
@@ -71,16 +70,42 @@ class Request
         return false
     end
 
+    def get_resource(resource)
+        # First line of resource acts as a constructor.
+        # Each argument is separated by a comma.
+        # First argument will be parent to rest.
+
+        route, args = resource.include?("?") ? resource.split("?",2) : [resource, nil]
+        route = "./resources"+route
+
+        data = {}
+        keys = []
+
+        IO.read(route).lines.each_with_index do |line, i|
+            if i == 0
+                keys = line.strip.split(",").map(&:strip)
+            else
+                d = {}
+                values = line.strip.split(",").map(&:strip)
+                keys.each_with_index { |key,i|  
+                    next if i==0
+                    d[key]=values[i]
+                }
+                data[values[0]]=d
+            end
+        end
+        data
+    end
+
     def parser(request)
         content = get_content(request)
         if content["Method"] == "GET"
-            # GET request handling
+            # Authenticate
+            auth_key = content["Params"]["auth_key"]
 
-            puts content["Params"]
-
-            # Check for auth_key
-            #content["auth_key"]
-            
+            if isAuthKeyValid?(auth_key,"lib/auth_keys.txt")
+                puts get_resource(content["Resource"])
+            end
 
 
         elsif content["Method"] == "POST"
@@ -159,21 +184,6 @@ class Request
         content["Headers"]=headers
         content["Params"]=params
         content
-    end
-
-    def get_resource(resource)
-        data = []
-        keys = []
-    
-        IO.read(resource).lines.each_with_index do |line, i|
-            if i == 0
-                keys = line.strip.split(",").map(&:strip)
-            else
-                values = line.strip.split(",").map(&:strip)
-                data << keys.zip(values).to_h
-            end
-        end
-        data
     end
 end
 
