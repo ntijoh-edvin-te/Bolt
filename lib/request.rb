@@ -11,7 +11,7 @@
 (GET ALLOWED) Sends resources back to client.
 
 (GET NOT ALLOWED) Echo ERROR to client.
-(GET NOT ALLOWED) Link to /login
+(GET NOT ALLOWED) Link to /login.
 
 (POST) username? & password?.
 (POST) login_allowed?.
@@ -21,7 +21,7 @@
 ### Sidenotes/Ideas
 ''' 
 [1] GET /fruits?bla=2 HTTP/1.1 
-    When server recieves this request can we 
+    When server recieves above request can we 
     check if client needs to load any HTML
     and if not required can we then send a 
     client specified resource (fruits) data only?
@@ -75,12 +75,12 @@ class Request
         content = get_content(request)
         if content["Method"] == "GET"
             # GET request handling
-            
-            puts content
+
+            puts content["Params"]
 
             # Check for auth_key
-            content["auth_key"]
-
+            #content["auth_key"]
+            
 
 
         elsif content["Method"] == "POST"
@@ -99,46 +99,65 @@ class Request
     end
 
     def get_content(request)
-        content = {}
-
-        # First line has Method Resource and Version
-        # Second line to next blank line has headers
-        # Rest of the lines are HTTP messages
-
         # Start-line
         # Headers
         # Empty line
         # Message body
+        #
+        # Construct a Tuple with Tuples 😱 -->    
+        #
+        #   content = {
+        #       Method=>Method,
+        #       Resources=>Resources,
+        #       Version=>Version,
+        #       Headers => { ... },
+        #       Params=> { ... }
+        #   }
+
+        content_ex = {
+            "Method"=>"GET",
+            "Resources"=>"/fruits?type=banana",
+            "Version"=>"HTTP/1.1",
+            "Headers"=>{"Host"=>"fruits.com", "User-Agents"=>"ExampleBrowser/1.0"},
+            "Params"=>{"Password"=>"roblox32!", "Username"=>"sigmawarrior32"}    
+        }
+
+        content = {}        
+        headers = {}
+        params = {}
 
         empty_line = false
         counter = 0
 
         File.read(request).each_line.with_index do |line,i|
-            empty_line=true if line.empty?&&empty_line==0
+            empty_line=true if line.length==1
             if i==0
                 # Start-line
                 content["Method"], content["Resource"], content["Version"] = line.split(" ")
             elsif !empty_line
                 # Headers
                 # (A) Helper function !!
-                headers = {} 
-                key, value = line.split(":", 2)
+                key, value = line.split(":", )
                 if key && value
                     headers[key.strip] = value.strip
                 end
-                headers
             elsif empty_line&&counter==0
                 # Empty line
                 counter+=1
             elsif empty_line&&counter==1
-                # Message body 
-                # (A) Helper function !! 
-                key, value = line.split("=", 2)
-                if key && value
-                    content[key.strip] = value.strip
-                end
+                # Params
+                # (A) Helper function !!
+                p = line.split("&",-1)
+                p.each { |param|
+                    key, value = param.split("=", 2)
+                    if key && value
+                        params[key.strip] = value.strip
+                    end
+                }
             end
         end
+        content["Headers"]=headers
+        content["Params"]=params
         content
     end
 

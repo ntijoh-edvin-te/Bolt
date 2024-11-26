@@ -4,4 +4,4 @@ User-Agent: ExampleBrowser/1.0
 Accept-Encoding: gzip, deflate
 Accept: */*
 
-auth_key=ad7a2hda2jvsc8wsd
+auth_key=ad7a2hda2jvsc8wsd&skibidi=rizz
