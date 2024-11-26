@@ -25,6 +25,10 @@
     check if client needs to load any HTML
     and if not required can we then send a 
     client specified resource (fruits) data only?
+
+    Determine with content type? If loading website 
+    content type will be text/HTML and if requesting
+    resources content type could be application/json
 [1]
 
 
@@ -56,9 +60,38 @@
 class Request
     def initialize(request)
         @allowed_methods = ["GET", "POST"]
+
+        parser(request)
+    end
+
+    def isAuthKeyValid?(auth_key, auth_keys)
+        File.read(auth_keys).lines.each { |key|
+            return true if key == auth_key
+        }
+        return false
     end
 
     def parser(request)
+        content = get_content(request)
+        if content["Method"] == "GET"
+            # GET request handling
+            
+            puts content
+
+            # Check for auth_key
+            content["auth_key"]
+
+
+
+        elsif content["Method"] == "POST"
+            # POST request handling
+
+
+
+        else
+            # Exception Handling
+            puts "Request not allowed."
+        end
     end
 
     def is_allowed?(request)
@@ -66,12 +99,41 @@ class Request
     end
 
     def get_content(request)
-        content = []
+        content = {}
+
+        # First line has Method Resource and Version
+        # Second line to next blank line has headers
+        # Rest of the lines are HTTP messages
+
+        # Start-line
+        # Headers
+        # Empty line
+        # Message body
+
+        empty_line = false
+        counter = 0
+
         File.read(request).each_line.with_index do |line,i|
+            empty_line=true if line.empty?&&empty_line==0
             if i==0
+                # Start-line
                 content["Method"], content["Resource"], content["Version"] = line.split(" ")
-            else
+            elsif !empty_line
+                # Headers
+                # (A) Helper function !!
+                headers = {} 
                 key, value = line.split(":", 2)
+                if key && value
+                    headers[key.strip] = value.strip
+                end
+                headers
+            elsif empty_line&&counter==0
+                # Empty line
+                counter+=1
+            elsif empty_line&&counter==1
+                # Message body 
+                # (A) Helper function !! 
+                key, value = line.split("=", 2)
                 if key && value
                     content[key.strip] = value.strip
                 end
