@@ -1,4 +1,4 @@
-GET /heroes?class=mage&rating=2 HTTP/1.1
+GET /heroes?class=mage HTTP/1.1
 Host: fruits.com
 User-Agent: ExampleBrowser/1.0
 Accept-Encoding: gzip, deflate

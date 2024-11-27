@@ -62,33 +62,54 @@ class Request
         @allowed_methods = ["GET", "POST"]
         parser(request)
     end
-
+    
     def isAuthKeyValid?(auth_key, auth_keys)
         File.read(auth_keys).lines.each { |key|
-            return true if key == auth_key
-        }
-        return false
-    end
+        return true if key == auth_key
+    }
+    return false
+end
 
-    def get_resource(resource)
-        route, args = resource.include?("?") ? resource.split("?",2) : [resource, nil]
-        route = "./resources"+route
-        args = args.split("&",-1).map{|arg| arg.split("=",2)}
+def parser(request)
+    content = get_content(request)
+    if content["Method"] == "GET"
+        # Authenticate
+        auth_key = content["Params"]["auth_key"]
+
+        if isAuthKeyValid?(auth_key,"lib/auth_keys.txt")
+            get_resource(content["Resource"])
+        end
+
+
+    elsif content["Method"] == "POST"
+        # POST request handling
+
+
+
+    else
+        # Exception Handling
+        puts "Request not allowed."
+    end
+end
+
+def get_resource(resource)
+    route, args = resource.include?("?") ? resource.split("?",2) : [resource, nil]
+    route = "./resources"+route
+        args = args.split("&",-1).map{|arg| arg.split("=",2)}.to_h
 
         # Extract
         data = read_resource(route)
 
         # Filter by args 
         data = filter_resource(data,args)
-        
     end
-
+    
     def filter_resource(data, args)
-        return data unless args && !args.empty?
-        filtered_data = data.select do |name, attributes|
-            args.all? { |key, value| attributes[key] == value }
+        data.select do |_, v|
+            args.all? do |key, value|
+                v[key] == value
+            end
         end
-        filtered_data
     end
 
     def read_resource(route)
@@ -98,6 +119,7 @@ class Request
         
         data = {}
         keys = []
+
         IO.read(route).lines.each_with_index do |line, i|
             if i == 0
                 keys = line.strip.split(",").map(&:strip)
@@ -114,27 +136,6 @@ class Request
         data
     end
 
-    def parser(request)
-        content = get_content(request)
-        if content["Method"] == "GET"
-            # Authenticate
-            auth_key = content["Params"]["auth_key"]
-
-            if isAuthKeyValid?(auth_key,"lib/auth_keys.txt")
-                get_resource(content["Resource"])
-            end
-
-
-        elsif content["Method"] == "POST"
-            # POST request handling
-
-
-
-        else
-            # Exception Handling
-            puts "Request not allowed."
-        end
-    end
 
     def isAllowed?(request)
         return @allowed_methods.include?(File.read(request).lines.first.split(" ")[0])
