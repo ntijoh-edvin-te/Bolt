@@ -1,1 +1,1 @@
-# A simple Ruby Based Web Server
+# A simple Ruby Based Sinatra Clone
