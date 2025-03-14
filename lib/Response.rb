@@ -4,7 +4,8 @@ require 'digest'
 require 'securerandom'
 
 class Response
-    def initialize
+    def initialize(logger)
+        @logger = logger
         @html_resources = {
             '/' => 'resources/index.html',
             '/login' => 'resources/login.html',
@@ -78,8 +79,6 @@ class Response
         build_response(400, 'text/plain', '')
     end
 
-    private
-
     def handle_registration(username, user_hash)
         if File.read('resources/usernames.txt').include?(username)
             build_response(409, 'text/plain', '')
@@ -146,10 +145,10 @@ class Response
     def method_not_allowed
         plain_body = 'Method not allowed'
         "HTTP/1.1 405 Method Not Allowed\r\n" \
-          "Content-Type: text/plain\r\n" \
-          "Content-Length: #{plain_body.bytesize}\r\n" \
-          "Connection: close\r\n" \
-          "\r\n" +
+            "Content-Type: text/plain\r\n" \
+            "Content-Length: #{plain_body.bytesize}\r\n" \
+            "Connection: close\r\n" \
+            "\r\n" +
             plain_body
     end
 

@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-require_relative 'Response'
-
 class MethodError < StandardError; end
 class ResourceError < StandardError; end
 
+require_relative 'Response'
+
 class Router
-    def initialize
+    def initialize(logger)
+        @logger = logger
         @routes = []
     end
 
@@ -20,7 +21,7 @@ class Router
         request_route = request.content['Resource']&.split('?')&.first || 'UNKNOWN_ROUTE'
         puts "#{method} #{request_route}"
 
-        response = Response.new
+        response = Response.new(@logger)
 
         begin
             route = @routes.find { |route| route[0] == request_route }

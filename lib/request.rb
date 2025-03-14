@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Request
-    def initialize(payload)
+    def initialize(payload, logger)
+        @logger = logger
         @content = parse(payload)
     end
 
