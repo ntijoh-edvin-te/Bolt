@@ -7,7 +7,7 @@ class Response
         @body = ''
     end
 
-    def get_response
+    def compose
         response = "HTTP/1.1 #{@status_code} OK\r\n"
         @headers.each do |key, value|
             response += "#{key}: #{value}\r\n"

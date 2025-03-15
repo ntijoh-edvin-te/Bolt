@@ -12,6 +12,6 @@ class HomeController < Controller
         response.headers['Content-Type'] = 'text/html'
         response.body = '<h1>Hello, World!</h1>'
 
-        response
+        response.compose
     end
 end

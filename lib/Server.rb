@@ -5,10 +5,9 @@ require_relative 'Objects/Request'
 require_relative 'controllers/HomeController'
 require_relative 'controllers/AuthController'
 require_relative 'controllers/ProfileController'
+require_relative 'controllers/Controller'
 
 class Server
-    # This class is responsible for starting the server and handling incoming connections.
-
     def initialize(logger, router, port = 8000)
         @logger = logger
         @logger.info("Server started on port: #{port}.")
@@ -60,8 +59,10 @@ class Server
                 case route[:controller]
                 when 'HomeController'
                     HomeController.new(@logger)
-                when 'UserController'
-                    UserController.new(@logger)
+                when 'AuthController'
+                    AuthController.new(@logger)
+                when 'ProfileController'
+                    ProfileController.new(@logger)
                 else
                     Controller.new(@logger)
                 end
