@@ -1,4 +1,2 @@
-require_relative 'Controller'
-
-class AuthController < Controller
+class AuthController
 end

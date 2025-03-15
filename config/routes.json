@@ -1,0 +1,62 @@
+{
+  "routes": {
+    "GET": [
+      {
+        "path": "/",
+        "controller": "HomeController",
+        "action": "default",
+        "allowed_roles": ["user", "guest"]
+      },
+      {
+        "path": "/@:username/gallery",
+        "controller": "ProfileController",
+        "action": "gallery",
+        "allowed_roles": ["user", "guest"]
+      },
+      {
+        "path": "/@:username",
+        "controller": "ProfileController",
+        "action": "profile",
+        "allowed_roles": ["user", "guest"]
+      },
+      {
+        "path": "/login",
+        "controller": "AuthController",
+        "action": "login",
+        "allowed_roles": ["guest"]
+      },
+      {
+        "path": "/logout",
+        "controller": "AuthController",
+        "action": "logout",
+        "allowed_roles": ["user"]
+      },
+      {
+        "path": "/register",
+        "controller": "AuthController",
+        "action": "register",
+        "allowed_roles": ["guest"]
+      }
+    ],
+    "POST": [
+      {
+        "path": "/login",
+        "controller": "AuthController",
+        "action": "login",
+        "allowed_roles": ["guest"]
+      },
+      {
+        "path": "/register",
+        "controller": "AuthController",
+        "action": "register",
+        "allowed_roles": ["guest"]
+      },
+      {
+        "path": "/upload",
+        "controller": "UserController",
+        "action": "upload",
+        "allowed_roles": ["user"]
+      }
+    ]
+  }
+}

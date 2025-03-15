@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require 'socket'
-require_relative 'Objects/Request'
 require_relative 'controllers/HomeController'
 require_relative 'controllers/AuthController'
 require_relative 'controllers/ProfileController'
 require_relative 'controllers/Controller'
+require_relative 'Request'
 
 class Server
     def initialize(logger, router, port = 8000)
@@ -25,53 +25,47 @@ class Server
         end
     end
 
+    private
+
     def flow(tcp_server, router)
         while (session = tcp_server.accept)
             @logger.info("New connection: #{session.peeraddr(:numeric)[2]}.")
 
-            payload = []
-
-            while (line = session.gets)
-                payload << line
-                break if line == "\r\n"
-            end
-
-            if payload.empty? || !payload[0].include?('HTTP')
-                @logger.info('Empty payload or HTTP request.')
-                session.close
-                return
-            end
-
-            content_length = 0
-            payload.each do |line|
-                if line.downcase.start_with?('content-length:')
-                    content_length = line.split(':', 2)[1].strip.to_i
-                    break
-                end
-            end
-
-            payload << session.read(content_length) if content_length.positive?
-
-            request = Request.new(payload, @logger)
+            request = Request.new(@logger, session)
             route = router.route(request)
-
+            cookies = request.content['Cookies']
+            auth_key = cookies ? get_auth_key(cookies) : nil
+            auth_keys = 'resources/auth/auth_keys.txt'
+            request_role = get_request_role(auth_key, auth_keys)
+            puts route
             controller =
                 case route[:controller]
-                when 'HomeController'
-                    HomeController.new(@logger)
-                when 'AuthController'
-                    AuthController.new(@logger)
-                when 'ProfileController'
-                    ProfileController.new(@logger)
+                when 'HomeController' && isAllowed?(route, request_role)
+                    HomeController.new
+                when 'AuthController' && isAllowed?(route, request_role)
+                    AuthController.new
+                when 'ProfileController' && isAllowed?(route, request_role)
+                    ProfileController.new
                 else
-                    Controller.new(@logger)
+                    Controller.new
                 end
 
-            @logger.info("Route: #{route[:controller]}##{route[:action]}.")
-            response = controller.send(route[:action], route[:middleware], request)
-
-            session.print(response)
+            puts route
         end
+    end
+
+    def isAllowed?(route, request_role)
+        route[:allowed_roles].include?(request_role)
+    end
+
+    def get_auth_key(cookies)
+        cookies.each do |cookie|
+            return cookie.split('=')[1] if cookie.include?('auth_key')
+        end
+    end
+
+    def get_request_role(auth_key, auth_keys)
+        isAuthenticated?(auth_key, auth_keys) ? 'user' : 'guest'
     end
 
     def isAuthenticated?(auth_key, auth_keys)

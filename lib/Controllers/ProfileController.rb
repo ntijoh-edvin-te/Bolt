@@ -1,4 +1,2 @@
-require_relative 'Controller'
-
-class ProfileController < Controller
+class ProfileController
 end

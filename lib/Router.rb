@@ -1,31 +1,22 @@
-# frozen_string_literal: true
-
 require 'json'
-
 class Router
     def initialize(logger)
         @logger = logger
         @routes = load_routes
-    end
-
-    def load_routes
-        JSON.parse(File.read('resources/routes/routes.json'))
-    rescue StandardError => e
-        @logger.error("Failed to load routes: #{e.message}")
-        { 'routes' => {} }
+        preprocess_routes
     end
 
     def route(request)
-        http_method = request.content.fetch('Method', 'GET').to_s.upcase
-        path = normalize_path(request.content.fetch('Resource', '/'))
+        method = request.content['Method'].upcase
+        path = request.content['Resource'].split('?').first
 
-        route_info = find_route(http_method, path)
-        route_info ||= find_route('GET', '/') || default_route
+        route_info = get_route(method, path) || default_route
 
         {
             controller: route_info['controller'],
             action: route_info['action'],
-            middleware: route_info['middleware'] || []
+            allowed_roles: route_info['allowed_roles'],
+            params: route_info['params']
         }
     rescue StandardError => e
         @logger.error("Router error: #{e.message}")
@@ -34,16 +25,69 @@ class Router
 
     private
 
-    def normalize_path(path)
-        normalized = path.gsub(%r{/+$}, '')
-        normalized.empty? ? '/' : normalized
+    def load_routes
+        routes_file = File.read('config/routes.json')
+        JSON.parse(routes_file)
+    rescue StandardError => e
+        @logger.error("Error loading routes: #{e.message}")
+        {}
     end
 
-    def find_route(http_method, path)
-        @routes.dig('routes', http_method, path)
+    def preprocess_routes
+        @routes['routes'].each do |method, routes|
+            routes.each do |route|
+                path = route['path']
+                regex, param_names = build_regex_and_params(path)
+                route['path_regex'] = regex
+                route['param_names'] = param_names
+            end
+        end
+    end
+
+    def build_regex_and_params(path)
+        param_names = []
+        parts = []
+
+        path.split('/').each do |segment|
+            next if segment.empty?
+
+            if segment.include?(':')
+                colon_index = segment.index(':')
+                static_part = segment[0...colon_index]
+                param_name = segment[(colon_index + 1)..-1]
+
+                parts << "#{Regexp.escape(static_part)}([^/]+)"
+                param_names << param_name
+            else
+                parts << Regexp.escape(segment)
+            end
+        end
+
+        regex_str = "^/#{parts.join('/')}$"
+        [Regexp.new(regex_str), param_names]
+    end
+
+    def get_route(method, path)
+        return nil unless @routes['routes'][method]
+
+        @routes['routes'][method].each do |route|
+            next unless (match = route['path_regex'].match(path))
+
+            params = {}
+            route['param_names'].each_with_index do |name, index|
+                params[name] = match[index + 1]
+            end
+            return route.merge('params' => params)
+        end
+        nil
     end
 
     def default_route
-        { controller: 'HomeController', action: 'index', middleware: [] }
+        {
+            'controller' => 'HomeController',
+            'action' => 'default',
+            'allowed_roles' => ['guest'],
+            'params' => {}
+        }
     end
 end
