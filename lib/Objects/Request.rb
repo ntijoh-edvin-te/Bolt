@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class Request
+    attr_reader :content
+
     def initialize(payload, logger)
         @logger = logger
         @content = parse(payload)
     end
-
-    attr_reader :content
 
     def parse(payload)
         full_request = payload.join
@@ -19,8 +19,8 @@ class Request
         request_line = header_lines.shift
         result['Method'], result['Resource'], result['Version'] = request_line.split(' ')
 
-        header_lines.each do |line|
-            key, value = line.split(':', 2)
+        header_lines.each do |header|
+            key, value = header.split(':', 2)
             headers[key.strip] = value.strip if key && value
         end
 

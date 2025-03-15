@@ -1,53 +1,49 @@
 # frozen_string_literal: true
 
-class MethodError < StandardError; end
-class ResourceError < StandardError; end
-
-require_relative 'Response'
+require 'json'
 
 class Router
     def initialize(logger)
         @logger = logger
-        @routes = []
+        @routes = load_routes
     end
 
-    def add_route(route, requires_auth)
-        @routes.push([route, requires_auth]) unless
-            @routes.include?([route, requires_auth])
+    def load_routes
+        JSON.parse(File.read('resources/routes/routes.json'))
+    rescue StandardError => e
+        @logger.error("Failed to load routes: #{e.message}")
+        { 'routes' => {} }
     end
 
-    def route(request, auth)
-        method = request.content['Method'] || 'UNKNOWN_METHOD'
-        request_route = request.content['Resource']&.split('?')&.first || 'UNKNOWN_ROUTE'
-        puts "#{method} #{request_route}"
+    def route(request)
+        http_method = request.content.fetch('Method', 'GET').to_s.upcase
+        path = normalize_path(request.content.fetch('Resource', '/'))
 
-        response = Response.new(@logger)
+        route_info = find_route(http_method, path)
+        route_info ||= find_route('GET', '/') || default_route
 
-        begin
-            route = @routes.find { |route| route[0] == request_route }
-            if !route
-                raise ResourceError, "Request route not found: #{request_route}"
-            elsif route[1] && !auth
-                response.unauthorized # Unauthorized
-            else
-                case method
-                when 'GET'
-                    response.get(request, auth) # GET
-                when 'POST'
-                    response.post(request, auth) # POST
-                else
-                    raise MethodError, "Invalid method: #{method}"
-                end
-            end
-        rescue MethodError => e
-            puts "Router error: method not allowed: #{e}"
-            response.method_not_allowed # Method not allowed
-        rescue ResourceError => e
-            puts "Router error: resource not found: #{e}"
-            response.route_not_found # Route not found
-        rescue Exception => e
-            puts "Router error: #{e}"
-            response.server_error # Internal server error
-        end
+        {
+            controller: route_info['controller'],
+            action: route_info['action'],
+            middleware: route_info['middleware'] || []
+        }
+    rescue StandardError => e
+        @logger.error("Router error: #{e.message}")
+        default_route
+    end
+
+    private
+
+    def normalize_path(path)
+        normalized = path.gsub(%r{/+$}, '')
+        normalized.empty? ? '/' : normalized
+    end
+
+    def find_route(http_method, path)
+        @routes.dig('routes', http_method, path)
+    end
+
+    def default_route
+        { controller: 'HomeController', action: 'index', middleware: [] }
     end
 end

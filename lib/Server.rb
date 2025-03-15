@@ -1,33 +1,46 @@
 # frozen_string_literal: true
 
 require 'socket'
-require_relative 'Request'
+require_relative 'Objects/Request'
+require_relative 'controllers/HomeController'
+require_relative 'controllers/AuthController'
+require_relative 'controllers/ProfileController'
 
 class Server
+    # This class is responsible for starting the server and handling incoming connections.
+
     def initialize(logger, router, port = 8000)
         @logger = logger
-        @logger.info('Server started on port: ' + port.to_s + '.')
+        @logger.info("Server started on port: #{port}.")
 
         tcp_server = TCPServer.new('localhost', port)
 
         begin
-            start(tcp_server, router)
+            flow(tcp_server, router)
         rescue Exception => e
             @logger.error("Server error: #{e}")
             @logger.info('Server restarting...')
-            wait(3)
             tcp_server.close
+            sleep(3)
             retry
         end
     end
 
-    def start(tcp_server, router)
+    def flow(tcp_server, router)
         while (session = tcp_server.accept)
-            @logger.info('New connection: ' + session.peeraddr(:numeric)[2] + '.')
+            @logger.info("New connection: #{session.peeraddr(:numeric)[2]}.")
+
             payload = []
+
             while (line = session.gets)
                 payload << line
                 break if line == "\r\n"
+            end
+
+            if payload.empty? || !payload[0].include?('HTTP')
+                @logger.info('Empty payload or HTTP request.')
+                session.close
+                return
             end
 
             content_length = 0
@@ -38,31 +51,25 @@ class Server
                 end
             end
 
-            if content_length.positive?
-                body = session.read(content_length)
-                payload << body
-            end
+            payload << session.read(content_length) if content_length.positive?
 
             request = Request.new(payload, @logger)
+            route = router.route(request)
 
-            begin
-                auth_keys_path = 'resources/auth_keys.txt'
-                auth_key = request.content['Headers']['Cookie'][/auth_key=([a-zA-Z0-9]{32})/, 1]
-            rescue Exception => e
-                auth_key = nil
-            ensure
-                auth = isAuthenticated?(auth_key, auth_keys_path) || false
-            end
+            controller =
+                case route[:controller]
+                when 'HomeController'
+                    HomeController.new(@logger)
+                when 'UserController'
+                    UserController.new(@logger)
+                else
+                    Controller.new(@logger)
+                end
 
-            @logger.info('Routing request...')
-            response = router.route(request, auth)
+            @logger.info("Route: #{route[:controller]}##{route[:action]}.")
+            response = controller.send(route[:action], route[:middleware], request)
 
-            if response
-                @logger.info('Sending response...')
-                session.print response
-            else
-                @logger.info('Got no response...')
-            end
+            session.print(response)
         end
     end
 
@@ -72,7 +79,7 @@ class Server
         begin
             File.foreach(auth_keys).any? { |line| line.chomp == auth_key }
         rescue Exception => e
-            @logger.info("Authentication error: #{e}")
+            @logger.info("Authentication failed: #{e}")
             false
         end
     end

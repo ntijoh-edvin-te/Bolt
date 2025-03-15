@@ -1,0 +1,48 @@
+{
+  "routes": {
+    "GET": {
+      "/": {
+        "controller": "HomeController",
+        "action": "index",
+        "middleware": ["Logger"]
+      },
+      "/profile": {
+        "controller": "ProfileController",
+        "action": "show",
+        "middleware": ["Logger", "Authentication"]
+      },
+      "/login": {
+        "controller": "AuthController",
+        "action": "loginForm",
+        "middleware": ["Logger", "GuestOnly"]
+      },
+      "/logout": {
+        "controller": "AuthController",
+        "action": "logout",
+        "middleware": ["Logger", "Authentication"]
+      },
+      "/register": {
+        "controller": "AuthController",
+        "action": "registerForm",
+        "middleware": ["Logger", "GuestOnly"]
+      }
+    },
+    "POST": {
+      "/login": {
+        "controller": "AuthController",
+        "action": "login",
+        "middleware": ["Logger", "GuestOnly", "CSRF"]
+      },
+      "/register": {
+        "controller": "AuthController",
+        "action": "register",
+        "middleware": ["Logger", "GuestOnly", "CSRF"]
+      },
+      "/profile/upload": {
+        "controller": "ProfileController",
+        "action": "uploadAvatar",
+        "middleware": ["Logger", "Authentication", "CSRF"]
+      }
+    }
+  }
+}
