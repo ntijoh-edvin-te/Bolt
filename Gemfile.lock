@@ -17,6 +17,7 @@ GEM
       logger (~> 1.5)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
+    colorize (1.1.0)
     concurrent-ruby (1.3.5)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
@@ -199,6 +200,7 @@ PLATFORMS
   x64-mingw-ucrt
 
 DEPENDENCIES
+  colorize (~> 1.1)
   minitest (~> 5.25)
   minitest-reporters (~> 1.7)
   rubocop (~> 1.74)

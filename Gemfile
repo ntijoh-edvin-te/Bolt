@@ -20,3 +20,5 @@ group :test do
     gem 'rubycritic', require: false
     gem 'simplecov', require: false
 end
+
+gem "colorize", "~> 1.1"
