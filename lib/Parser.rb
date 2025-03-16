@@ -3,12 +3,12 @@
 require 'uri'
 require 'cgi'
 
-class Request
-    attr_reader :content
+class Parser
+    attr_reader :content, :logger
 
     def initialize(logger, session)
         @logger = logger
-        content = parse(session)
+        @content = parse(session)
     end
 
     def get?

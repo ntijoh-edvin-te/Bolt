@@ -22,3 +22,7 @@ group :test do
 end
 
 gem "colorize", "~> 1.1"
+
+gem "sequel", "~> 5.90"
+
+gem "sqlite3", "~> 2.6"

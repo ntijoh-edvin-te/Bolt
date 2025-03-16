@@ -12,5 +12,5 @@ Bolt
 a simple HTTP server written in Ruby
 </h6>
 
-<img src="assets/logo.png" width=200px style="box-shadow: -2px 2px 3px black;margin-top:5px">
+<img src="https://image.bokus.com/images/9788726830835_383x_bolt_ljudbok" width=200px style="box-shadow: -2px 2px 3px black;margin-top:5px">
 </div>
