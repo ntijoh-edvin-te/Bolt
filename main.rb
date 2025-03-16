@@ -10,9 +10,9 @@ log_device = LogDevice.new
 router = Router.new(log_device)
 
 router.scope '/' do
-    Routes.auth(router)
-    Routes.profile(router)
-    Routes.home(router)
+    Routes.define_auth(router)
+    Routes.define_profile(router)
+    Routes.define_home(router)
 end
 
 server = Server.new(log_device, router)

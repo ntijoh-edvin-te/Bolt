@@ -63,11 +63,6 @@ class Router
 
     private
 
-    def render_template(template_path, locals = {})
-        template = File.read("views/#{template_path}")
-        ERB.new(template).result_with_hash(locals)
-    end
-
     def add_route(method, path, handler_or_action, options = {})
         constraints = options[:constraints] || {}
         pattern, param_names = compile_path(path, constraints)
@@ -136,9 +131,9 @@ class Router
             @prefix = prefix
         end
 
-        %i[get post put patch delete resources scope].each do |method|
+        %i[get post put patch delete scope].each do |method|
             define_method(method) do |*args, &block|
-                if %i[scope resources].include?(method)
+                if method == :scope
                     process_nested_route(method, *args, &block)
                 else
                     path, *options = args
