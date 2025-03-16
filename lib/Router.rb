@@ -9,8 +9,9 @@ class Router
     end
 
     %i[get post put patch delete].each do |method|
-        define_method(method) do |path, **options, &handler|
-            add_route(method.to_s.upcase, path, handler, options)
+        define_method(method) do |path, to: nil, **options, &handler|
+            handler_or_action = to || handler
+            add_route(method.to_s.upcase, path, handler_or_action, options)
         end
     end
 
@@ -48,7 +49,13 @@ class Router
 
             params = extract_params(match, route[:param_names])
             logger.call("Matched #{route[:method]} #{route[:original_path]}")
-            return route[:handler].call(request, params)
+
+            if route[:controller] && route[:action]
+                controller = route[:controller].new
+                return controller.send(route[:action], request, params)
+            elsif route[:handler].respond_to?(:call)
+                return route[:handler].call(request, params)
+            end
         end
 
         handle_not_found(http_method, path)
@@ -61,17 +68,29 @@ class Router
         ERB.new(template).result_with_hash(locals)
     end
 
-    def add_route(method, path, handler, options)
-        pattern, param_names = compile_path(path, options[:constraints] || {})
+    def add_route(method, path, handler_or_action, options = {})
+        constraints = options[:constraints] || {}
+        pattern, param_names = compile_path(path, constraints)
 
-        @routes[method] << {
+        route = {
             method: method,
             original_path: path,
             pattern: pattern,
-            param_names: param_names,
-            handler: handler,
-            name: options[:as]
+            param_names: param_names
         }
+
+        if handler_or_action.is_a?(String) && handler_or_action.include?('#')
+            controller_name, action = handler_or_action.split('#')
+            controller_class_name = "#{controller_name.capitalize}Controller"
+            route[:controller] = Object.const_get(controller_class_name)
+            route[:action] = action.to_sym
+        elsif handler_or_action.respond_to?(:call)
+            route[:handler] = handler_or_action
+        end
+
+        route[:as] = options[:as] if options[:as]
+
+        @routes[method] << route
     end
 
     def compile_path(path, constraints)
